@@ -17,41 +17,69 @@ document.addEventListener("DOMContentLoaded", () => {
 
     let cursorVisible = false;
 
-    window.addEventListener("mousemove", (e) => {
-        if (!cursorVisible) {
-            gsap.to([cursorDot, cursorOutline], { opacity: 1, duration: 0.3 });
-            cursorVisible = true;
-        }
+    // Only enable custom cursor on non-touch devices
+    const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
 
-        const posX = e.clientX;
-        const posY = e.clientY;
+    if (!isTouchDevice) {
+        window.addEventListener("mousemove", (e) => {
+            if (!cursorVisible) {
+                gsap.to([cursorDot, cursorOutline], { opacity: 1, duration: 0.3 });
+                cursorVisible = true;
+            }
 
-        // Dot follows instantly
-        gsap.to(cursorDot, {
-            x: posX,
-            y: posY,
-            duration: 0.1 // minimal lag
+            const posX = e.clientX;
+            const posY = e.clientY;
+
+            // Dot follows instantly
+            gsap.to(cursorDot, {
+                x: posX,
+                y: posY,
+                duration: 0.1 
+            });
+
+            // Outline follows with lag
+            gsap.to(cursorOutline, {
+                x: posX,
+                y: posY,
+                duration: 0.5,
+                ease: "power2.out"
+            });
         });
 
-        // Outline follows with lag
-        gsap.to(cursorOutline, {
-            x: posX,
-            y: posY,
-            duration: 0.5,
-            ease: "power2.out"
+        // Hover Effects
+        const hoverables = document.querySelectorAll("a, button, .timeline-content, .edu-box");
+        hoverables.forEach(el => {
+            el.addEventListener("mouseenter", () => {
+                document.body.classList.add("hovering");
+                gsap.to(cursorOutline, { scale: 1.5, duration: 0.3 });
+            });
+            el.addEventListener("mouseleave", () => {
+                document.body.classList.remove("hovering");
+                gsap.to(cursorOutline, { scale: 1, duration: 0.3 });
+            });
         });
-    });
+    }
 
-    // Hover Effects
-    const hoverables = document.querySelectorAll("a, button, .timeline-content, .edu-box");
-    hoverables.forEach(el => {
-        el.addEventListener("mouseenter", () => {
-            document.body.classList.add("hovering");
-            gsap.to(cursorOutline, { scale: 1.5, duration: 0.3 });
-        });
-        el.addEventListener("mouseleave", () => {
-            document.body.classList.remove("hovering");
-            gsap.to(cursorOutline, { scale: 1, duration: 0.3 });
+    // --- SMOOTH SCROLL FALLBACK ---
+    // Handles anchor links to ensure they work smoothly
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('href');
+            if (targetId === '#') return;
+            
+            const targetElement = document.querySelector(targetId);
+            if (targetElement) {
+                // Account for fixed navbar (approx 80px)
+                const headerOffset = 80;
+                const elementPosition = targetElement.getBoundingClientRect().top;
+                const offsetPosition = elementPosition + window.scrollY - headerOffset;
+
+                window.scrollTo({
+                    top: offsetPosition,
+                    behavior: "smooth"
+                });
+            }
         });
     });
 
@@ -71,7 +99,13 @@ document.addEventListener("DOMContentLoaded", () => {
     heroTl.from(".hero-subtitle", { y: 20, opacity: 0, duration: 1, delay: 0.2 })
           .from(".hero-title", { y: 50, opacity: 0, duration: 1 }, "-=0.8")
           .from(".hero-summary", { y: 30, opacity: 0, duration: 1 }, "-=0.8")
-          .from(".btn", { y: 20, opacity: 0, stagger: 0.2, duration: 0.8 }, "-=0.6")
+          .from(".hero-cta .btn", { 
+              y: 20, 
+              autoAlpha: 0, 
+              stagger: 0.2, 
+              duration: 0.8,
+              clearProps: "all"
+          }, "-=0.6")
           .from(".hero-bg-text", { scale: 1.2, opacity: 0, duration: 2 }, "-=1.5");
 
 
